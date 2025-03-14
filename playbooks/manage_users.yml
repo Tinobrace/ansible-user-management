@@ -1,0 +1,30 @@
+---
+- name: Manage Users on GCP Instances
+  hosts: gcp_servers
+  become: yes
+  tasks:
+    - name: Create a new group
+      group:
+        name: devops
+        state: present
+
+    - name: Create a new user and add to group
+      user:
+        name: pipelinestein
+        groups: devops
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Set up SSH key for the user
+      authorized_key:
+        user: pipelinestein
+        state: present
+        key: "{{ lookup('file', '/home/dreamfyre/ansible-user-management/files/pipelinestein.pub') }}"
+
+    - name: Ensure sudoers file is configured for pipelinestein
+      copy:
+        dest: "/etc/sudoers.d/pipelinestein"
+        content: "pipelinestein ALL=(ALL) NOPASSWD:ALL"
+        mode: 0440
